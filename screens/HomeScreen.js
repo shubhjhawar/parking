@@ -50,7 +50,7 @@ const HomeScreen = () => {
     console.log(longitude);
 
   return (
-    <SafeAreaView style={tw`flex-1 h-full items-center justify-center`}>
+    <View style={tw`flex-1 h-full items-center justify-center`}>
       {!isLoading ? (
         // Content to show when loading is complete
         <Home latitude={latitude} longitude={longitude} />
@@ -58,7 +58,7 @@ const HomeScreen = () => {
         // Loading screen while waiting
         <LoadingScreen />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 

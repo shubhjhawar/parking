@@ -1,9 +1,91 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, Image } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import MapViewDirections from 'react-native-maps-directions';
 import tw from 'tailwind-react-native-classnames';
+import { GOOGLE_MAPS_APIKEY } from "@env";
 
-const NewMap = ({ latitude, longitude }) => {
+function calculateInitialBearing(lat1, lon1, lat2, lon2) {
+  const dLon = lon2 - lon1;
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+  const initialBearing = Math.atan2(y, x);
+  
+  // Convert the result from radians to degrees
+  return (initialBearing * 180) / Math.PI;
+}
+
+const NewMap = ({ latitude, longitude, parking, isNavigating }) => {
+  const mapRef = useRef(null);
+  const [isTrip, setIsTrip] = useState(false);
+
+
+  useEffect(() => {
+    if (mapRef.current && parking) {
+      // Fit to markers when parking marker is available
+      mapRef.current.fitToSuppliedMarkers(['origin', 'destination'], {
+        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+      });
+    }
+  }, [parking]);
+
+  useEffect(() => {
+    if (mapRef.current) {
+      if (isNavigating) {
+        mapRef.current.animateToRegion({
+          latitude: latitude,
+          longitude: longitude,
+          latitudeDelta: 0.001, 
+          longitudeDelta: 0.001,
+        });
+
+        setIsTrip(true);
+
+      } else {
+        // Reset the heading and zoom when not navigating
+        mapRef.current.animateToRegion(
+          {
+            latitude: latitude,
+            longitude: longitude,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          },
+          1000
+          );
+
+        setIsTrip(false);
+          }
+        }
+      }, [isNavigating]);
+      
+
+  useEffect(() => {
+    if (isTrip && parking) {
+      // After a delay, animate the camera with the desired heading and zoom
+      const initialBearing = calculateInitialBearing(
+        latitude,
+        longitude,
+        parking.latitude,
+        parking.longitude
+      );
+
+      setTimeout(() => {
+        mapRef.current.animateCamera({
+          heading: initialBearing,
+          center: {
+            latitude: latitude,
+            longitude: longitude,
+          },
+          pitch: 55,
+          zoom: 15,
+          duration: 3000,
+        });
+      }, 500); // Delay for 1000 milliseconds (1 second) before animating
+    }
+  }, [isTrip, parking, latitude, longitude]);
+  
+  
+
   if (latitude === null || longitude === null) {
     // Handle the case where latitude and longitude are not available yet.
     // You can return a loading screen or error message here.
@@ -16,13 +98,14 @@ const NewMap = ({ latitude, longitude }) => {
 
   return (
     <MapView
+      ref={mapRef}
       style={tw`flex-1 w-full h-full`}
       mapType='mutedStandard'
       initialRegion={{
         latitude: latitude,
         longitude: longitude,
-        latitudeDelta: 0.005,
-        longitudeDelta: 0.005,
+        latitudeDelta: 0.005, // Dynamically set latitudeDelta
+        longitudeDelta: 0.005, // Dynamically set longitudeDelta
       }}
     >
       <Marker
@@ -31,11 +114,47 @@ const NewMap = ({ latitude, longitude }) => {
           longitude: longitude,
         }}
         title="My Location"
-      />
+        identifier='origin'
+      >
+        <View style={tw`w-7 h-7 bg-white rounded-full items-center justify-center shadow-2xl`}>
+          <View style={tw`w-5 h-5 bg-blue-400 rounded-full items-center justify-center`}></View>
+        </View>
+      </Marker>
 
-      <TouchableOpacity style={tw`flex items-center justify-center bg-blue-500 absolute bottom-0 p-4 m-2 mr-10 rounded-lg`}>
-        <Text style={tw`flex items-center justify-center`}>Find Parkingnjnkjnkj</Text>
-      </TouchableOpacity>
+      {parking && (
+        <Marker
+          coordinate={{
+            latitude: parking.latitude,
+            longitude: parking.longitude,
+          }}
+          // image = {require('../assets/mark.png')}
+          title="My parking"
+          identifier='destination'
+        >
+          <Image
+            source= {require('../assets/mark.png')}
+            alt="parking"
+            style={{width:30, height:40}}
+          />
+        </Marker>
+      )}
+
+      {parking && (
+        <MapViewDirections
+          origin={{
+            latitude: latitude,
+            longitude: longitude,
+          }}
+          destination={{
+            latitude: parseFloat(parking.latitude),
+            longitude: parseFloat(parking.longitude),
+          }}
+          apikey={GOOGLE_MAPS_APIKEY}
+          strokeWidth={3}
+          strokeColor="black"
+        />
+      )}
+
     </MapView>
   );
 };
