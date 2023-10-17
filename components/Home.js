@@ -1,8 +1,10 @@
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NewMap from './NewMap.js';
 import tw from 'tailwind-react-native-classnames';
 import { parkings } from '../parking/index.js';
+import { GOOGLE_MAPS_APIKEY } from "@env";
+import moment from "moment"
 
 // Function to calculate the Haversine distance between two points
 const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
@@ -41,6 +43,8 @@ const Home = ({ latitude, longitude }) => {
   const [closestParking, setClosestParking] = useState(null);
   const [isNavigating, setIsNavigating] = useState(false);
 
+  const [time, setTime] = useState(null);
+  const [distance, setDistance] = useState(null);
 
   const handleButtonPress = () => {
     const closest = findClosestParking(latitude, longitude, parkings);
@@ -53,21 +57,60 @@ const Home = ({ latitude, longitude }) => {
     setIsNavigating((prev) => !prev);
   }
 
+  useEffect(() => {
+    if(latitude && longitude && closestParking)
+    {
+      const origin = `${latitude},${longitude}`; // Use the latitude and longitude of your origin
+      const destination = `${closestParking.latitude},${closestParking.longitude}`; // Use the coordinates of your destination (parking)
+
+      const apiUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=${GOOGLE_MAPS_APIKEY}`;
+  
+      fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+          // Handle the distance and duration data from the response
+          setTime(data.rows[0].elements[0].duration.text);
+          setDistance(data.rows[0].elements[0].distance.text)
+
+          // Calculate estimated arrival time
+          // const estimatedArrivalTime = addTimeToDate(currentTime, time);
+          // setTime(estimatedArrivalTime);
+
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+  }, [latitude, longitude, closestParking, time, distance])
+  
+  console.log(time,  distance);
+
   return (
     <View style={tw`flex-1 h-full w-full items-center justify-center`}>
       <NewMap latitude={latitude} longitude={longitude} parking={closestParking} isNavigating={isNavigating} />
-      <View style={tw`flex flex-row items-center justify-around w-full p-2 bg-gray-300 my-2 pb-10`}>
-        <TouchableOpacity onPress={handleButtonPress} style={tw`m-auto w-1/2 flex bg-blue-500 p-4 mr-1 rounded-lg`}>
-          <Text style={tw`z-10 text-white text-center text-lg font-semibold`}>Find My Parking</Text>
-        </TouchableOpacity>
+      <View style={tw`flex items-center justify-around w-full p-2 bg-gray-200 pb-10 rounded-2xl shadow-2xl border`}>
 
-        <TouchableOpacity disabled={!closestParking} onPress={handleTripButton} style={tw`${!closestParking && "opacity-20"} m-auto w-1/2 flex bg-red-500 p-4 ml-1 rounded-lg`}>
-          {isNavigating ? (
-          <Text style={tw`z-10 text-white text-center text-lg font-semibold`}>Cancel</Text>
-          ) : (
-          <Text style={tw`z-10 text-white text-center text-lg font-semibold`}>Let's GO!</Text>
-          )}
-        </TouchableOpacity>
+        {closestParking && (
+          <View style={tw`flex flex-row p-2 w-full justify-between`}>
+            <Text style={tw`text-lg text-black font-semibold `}>{time}</Text>
+            <Text style={tw`text-lg text-black font-semibold `}>{distance}</Text>
+          </View>
+        )}
+        
+       <View style={tw`flex flex-row`}>
+        <TouchableOpacity onPress={handleButtonPress} style={tw`m-auto w-1/2 flex bg-blue-500 p-4 mr-1 rounded-lg`}>
+            <Text style={tw`z-10 text-white text-center text-lg font-semibold`}>Find My Parking</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity disabled={!closestParking} onPress={handleTripButton} style={tw`${!closestParking && "opacity-20"} m-auto w-1/2 flex bg-red-500 p-4 ml-1 rounded-lg`}>
+            {isNavigating ? (
+            <Text style={tw`z-10 text-white text-center text-lg font-semibold`}>Cancel</Text>
+            ) : (
+            <Text style={tw`z-10 text-white text-center text-lg font-semibold`}>Let's GO!</Text>
+            )}
+          </TouchableOpacity>
+       </View>
+
       </View>
     </View>
   );
