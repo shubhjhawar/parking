@@ -10,6 +10,7 @@ export default function App() {
   
   return (
     <NavigationContainer style={styles.container}>
+      <StatusBar style="auto" />
       <Stack.Navigator>
         <Stack.Screen 
           name="HomeScreen"
@@ -29,5 +30,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: 0,
   },
 });

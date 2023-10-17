@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import * as Location from "expo-location";
 
 const LoadingScreen = () => {
   return (
@@ -15,6 +14,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor:'red'
   },
 });
 
