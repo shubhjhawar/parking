@@ -4,7 +4,8 @@ import NewMap from './NewMap.js';
 import tw from 'tailwind-react-native-classnames';
 import { parkings } from '../parking/index.js';
 import { GOOGLE_MAPS_APIKEY } from "@env";
-import moment from "moment"
+import moment from "moment";
+import { ff } from '../parking/functions.js';
 
 // Function to calculate the Haversine distance between two points
 const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
@@ -40,17 +41,26 @@ const findClosestParking = (currentLat, currentLon, parkingSpots) => {
 };
 
 const Home = ({ latitude, longitude }) => {
+  const [parkingSpots, setParkingSpots] = useState({});
   const [closestParking, setClosestParking] = useState(null);
   const [isNavigating, setIsNavigating] = useState(false);
 
   const [time, setTime] = useState(null);
   const [distance, setDistance] = useState(null);
 
-  const handleButtonPress = () => {
-    const closest = findClosestParking(latitude, longitude, parkings);
-    setClosestParking(closest);
-    console.log("button pressed");
-    console.log(closest);
+  const [index, setIndex] = useState(0);
+
+  const handleButtonPress = () => {    
+    const closestParkingSpots = ff(latitude, longitude, parkings, 5);
+    setParkingSpots(closestParkingSpots);
+
+    setClosestParking(closestParkingSpots[index]);
+    setIndex((prev) => prev+1);
+
+    if(index == 3)
+    {
+      setIndex(0);
+    }
   };
 
   const handleTripButton = () => {
@@ -72,10 +82,6 @@ const Home = ({ latitude, longitude }) => {
           setTime(data.rows[0].elements[0].duration.text);
           setDistance(data.rows[0].elements[0].distance.text)
 
-          // Calculate estimated arrival time
-          // const estimatedArrivalTime = addTimeToDate(currentTime, time);
-          // setTime(estimatedArrivalTime);
-
         })
         .catch(error => {
           console.error('Error:', error);
@@ -84,6 +90,7 @@ const Home = ({ latitude, longitude }) => {
   }, [latitude, longitude, closestParking, time, distance])
   
   console.log(time,  distance);
+
 
   return (
     <View style={tw`flex-1 h-full w-full items-center justify-center`}>
@@ -99,7 +106,11 @@ const Home = ({ latitude, longitude }) => {
         
        <View style={tw`flex flex-row`}>
         <TouchableOpacity onPress={handleButtonPress} style={tw`m-auto w-1/2 flex bg-blue-500 p-4 mr-1 rounded-lg`}>
-            <Text style={tw`z-10 text-white text-center text-lg font-semibold`}>Find My Parking</Text>
+            {index == 0 ? (
+              <Text style={tw`z-10 text-white text-center text-lg font-semibold`}>Find My Parking</Text>
+            ): (
+              <Text style={tw`z-10 text-white text-center text-lg font-semibold`}>Another Parking</Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity disabled={!closestParking} onPress={handleTripButton} style={tw`${!closestParking && "opacity-20"} m-auto w-1/2 flex bg-red-500 p-4 ml-1 rounded-lg`}>

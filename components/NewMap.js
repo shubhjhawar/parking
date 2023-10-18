@@ -19,7 +19,6 @@ const NewMap = ({ latitude, longitude, parking, isNavigating }) => {
   const mapRef = useRef(null);
   const [isTrip, setIsTrip] = useState(false);
 
-
   useEffect(() => {
     if (mapRef.current && parking) {
       // Fit to markers when parking marker is available
