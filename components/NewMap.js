@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Text, Image, TouchableOpacity } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import tw from 'tailwind-react-native-classnames';
 import { GOOGLE_MAPS_APIKEY } from "@env";
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 function calculateInitialBearing(lat1, lon1, lat2, lon2) {
   const dLon = lon2 - lon1;
@@ -18,6 +19,7 @@ function calculateInitialBearing(lat1, lon1, lat2, lon2) {
 const NewMap = ({ latitude, longitude, parking, isNavigating }) => {
   const mapRef = useRef(null);
   const [isTrip, setIsTrip] = useState(false);
+  const [mapType, setMapType] = useState(true);
 
   useEffect(() => {
     if (mapRef.current && parking) {
@@ -83,7 +85,9 @@ const NewMap = ({ latitude, longitude, parking, isNavigating }) => {
     }
   }, [isTrip, parking, latitude, longitude]);
   
-  
+  const handleMapStyle = () => {
+    setMapType((prev) => !prev);
+  }
 
   if (latitude === null || longitude === null) {
     // Handle the case where latitude and longitude are not available yet.
@@ -99,7 +103,7 @@ const NewMap = ({ latitude, longitude, parking, isNavigating }) => {
     <MapView
       ref={mapRef}
       style={tw`flex-1 w-full h-full`}
-      mapType='mutedStandard'
+      mapType={mapType ? 'mutedStandard' : 'satellite'}
       initialRegion={{
         latitude: latitude,
         longitude: longitude,
@@ -150,9 +154,13 @@ const NewMap = ({ latitude, longitude, parking, isNavigating }) => {
           }}
           apikey={GOOGLE_MAPS_APIKEY}
           strokeWidth={3}
-          strokeColor="black"
+          strokeColor={mapType ? "black" : "white"}
         />
       )}
+
+      <TouchableOpacity onPress={handleMapStyle} style={tw`p-3 shadow-lg rounded-full bg-white absolute bottom-10 left-0 m-2`}>
+        {mapType ? <Icon name="rocket" size={30} color="#ef6f2f" /> : <Icon name="map" size={30} color="#ef6f2f" />}
+      </TouchableOpacity>
 
     </MapView>
   );

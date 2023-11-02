@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "parking",
-    "slug": "parking",
+    "name": "Find My Parking",
+    "slug": "findMyParking",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,9 +15,12 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.findMy.parking"
     },
     "android": {
+      "package": "com.findMy.parking",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -25,6 +28,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "09c7e44e-36c5-4073-9726-bdf827a6e827"
+      }
     }
   }
 }
