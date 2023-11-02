@@ -6,6 +6,8 @@ import { parkings } from '../parking/index.js';
 import { GOOGLE_MAPS_APIKEY } from "@env";
 import moment from "moment";
 import { ff } from '../parking/functions.js';
+import GyroComponent from './GyroComponent.js';
+import { Accelerometer } from 'expo-sensors';
 
 // Function to calculate the Haversine distance between two points
 const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
@@ -49,6 +51,27 @@ const Home = ({ latitude, longitude }) => {
   const [distance, setDistance] = useState(null);
 
   const [index, setIndex] = useState(0);
+
+  const [{ x, y, z }, setData] = useState({
+    x: 0,
+    y: 0,
+    z: 0,
+  });
+  const [subscription, setSubscription] = useState(null);
+
+  const subscribe = () => {
+    setSubscription(Accelerometer.addListener(setData));
+  };
+
+  const unsubscribe = () => {
+    subscription && subscription.remove();
+    setSubscription(null);
+  };
+
+  useEffect(() => {
+    subscribe();
+    return () => unsubscribe();
+  }, []);
 
   const handleButtonPress = () => {    
     const closestParkingSpots = ff(latitude, longitude, parkings, 5);
@@ -105,7 +128,8 @@ const Home = ({ latitude, longitude }) => {
         )}
         
        <View style={tw`flex flex-row`}>
-        <TouchableOpacity onPress={handleButtonPress} style={tw`m-auto w-1/2 flex bg-blue-500 p-4 mr-1 rounded-lg`}>
+        {/* <GyroComponent style={tw`p-10 mb-10`} /> */}
+        <TouchableOpacity disabled={isNavigating} onPress={handleButtonPress} style={tw`${isNavigating && "opacity-20"} m-auto w-1/2 flex bg-blue-500 p-4 mr-1 rounded-lg`}>
             {index == 0 ? (
               <Text style={tw`z-10 text-white text-center text-lg font-semibold`}>Find My Parking</Text>
             ): (
@@ -121,6 +145,15 @@ const Home = ({ latitude, longitude }) => {
             )}
           </TouchableOpacity>
        </View>
+
+       {/* <View>
+       <Text style={styles.text}>x: {x}</Text>
+      <Text style={styles.text}>y: {y}</Text>
+      <Text style={styles.text}>z: {z}</Text>
+      <TouchableOpacity onPress={subscription ? unsubscribe : subscribe}>
+          <Text>{subscription ? 'On' : 'Off'}</Text>
+        </TouchableOpacity>
+       </View> */}
 
       </View>
     </View>
